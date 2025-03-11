@@ -1,36 +1,61 @@
-import pandas as pd
 import streamlit as st
+import pandas as pd
+import matplotlib.pyplot as plt
 
 # Load data
-df_university = pd.read_csv('/content/university_student_dashboard_data.csv')
+def load_data():
+    file_path = "university_student_dashboard_data.csv"
+    df = pd.read_csv(file_path)
+    return df
 
-def university_dashboard():
-    st.title("University Admissions & Satisfaction Dashboard")
+df = load_data()
 
-    # Total Applications and Enrollments per Term
-    st.write("### Total Applications and Enrollments per Term")
-    term_summary = df_university.groupby('term')[['applications', 'enrollments']].sum()
-    st.bar_chart(term_summary)
+# Streamlit app
+st.title("University Admissions and Student Satisfaction Dashboard")
 
-    # Retention Rate Over Time
-    st.write("### Retention Rate Over Time")
-    retention_trend = df_university.groupby('year')['retention_rate'].mean()
-    st.line_chart(retention_trend)
+# Filters
+years = df['Year'].unique()
+selected_year = st.selectbox("Select Year", years)
 
-    # Student Satisfaction Scores
-    st.write("### Student Satisfaction Scores")
-    satisfaction_trend = df_university.groupby('year')['satisfaction_score'].mean()
-    st.line_chart(satisfaction_trend)
+df_filtered = df[df['Year'] == selected_year]
 
-    # Enrollment Breakdown by Department
-    st.write("### Enrollment Breakdown by Department")
-    department_enrollment = df_university.groupby('department')['enrollments'].sum()
-    st.bar_chart(department_enrollment)
+# Applications, Admissions, and Enrollments over time
+st.subheader("Applications, Admissions, and Enrollments")
+fig, ax = plt.subplots()
+ax.plot(df_filtered['Term'], df_filtered['Applications'], label='Applications', marker='o')
+ax.plot(df_filtered['Term'], df_filtered['Admitted'], label='Admitted', marker='o')
+ax.plot(df_filtered['Term'], df_filtered['Enrolled'], label='Enrolled', marker='o')
+ax.set_ylabel("Count")
+ax.set_title("Admissions Trends")
+ax.legend()
+st.pyplot(fig)
 
-    # Comparison Between Spring and Fall Terms
-    st.write("### Comparison Between Spring and Fall Terms")
-    term_comparison = df_university.groupby('term')[['applications', 'enrollments']].mean()
-    st.bar_chart(term_comparison)
+# Retention and Satisfaction Trends
+st.subheader("Retention Rate and Student Satisfaction")
+fig, ax = plt.subplots()
+ax.plot(df_filtered['Term'], df_filtered['Retention Rate (%)'], label='Retention Rate', marker='o')
+ax.plot(df_filtered['Term'], df_filtered['Student Satisfaction (%)'], label='Satisfaction', marker='o')
+ax.set_ylabel("Percentage")
+ax.set_title("Retention and Satisfaction Trends")
+ax.legend()
+st.pyplot(fig)
 
-# Run the dashboard function
-university_dashboard()
+# Enrollment Breakdown by Department
+st.subheader("Enrollment Breakdown by Department")
+departments = ['Engineering Enrolled', 'Business Enrolled', 'Arts Enrolled', 'Science Enrolled']
+department_counts = df_filtered[departments].sum()
+fig, ax = plt.subplots()
+ax.bar(departments, department_counts)
+ax.set_ylabel("Number of Students")
+ax.set_title("Department-wise Enrollment")
+st.pyplot(fig)
+
+# Insights and Summary
+st.subheader("Key Insights")
+insights = """
+- **Admissions Trends**: Applications and enrollments fluctuate across terms, with a notable difference between Spring and Fall.
+- **Retention & Satisfaction**: Retention and satisfaction trends indicate overall stability but show variations by year.
+- **Department Analysis**: Engineering and Business typically see the highest enrollments, while Arts and Science have steadier numbers.
+- **Spring vs. Fall**: Comparing across terms reveals key differences in admission rates and student preferences.
+"""
+st.markdown(insights)
